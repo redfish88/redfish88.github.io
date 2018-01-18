@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="SQL database," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="平时写SQL时积累的一些关于SQL优化的技巧 选择最有效率的表名顺序ORACLE的解析器是按照从右到左的顺序处理FROM中的表名，FROM中最后面的表（基础表）将优先被处理，在from包含多个表时，你必须将记录最少的表作为基础表，如果是3个表以上的表连接，那必须将交叉表作为基础表，交叉表是指被其他表引用的表 尽量用EXISTS和NOT EXISTS代替IN和NOT INEXISTS一定比IN查询速">
+<meta name="keywords" content="SQL database">
+<meta property="og:type" content="article">
+<meta property="og:title" content="如何优化SQL语句">
+<meta property="og:url" content="http://yoursite.com/2013/05/28/2013-05-28-how-to-optimize-sql/index.html">
+<meta property="og:site_name" content="空心菜的博客">
+<meta property="og:description" content="平时写SQL时积累的一些关于SQL优化的技巧 选择最有效率的表名顺序ORACLE的解析器是按照从右到左的顺序处理FROM中的表名，FROM中最后面的表（基础表）将优先被处理，在from包含多个表时，你必须将记录最少的表作为基础表，如果是3个表以上的表连接，那必须将交叉表作为基础表，交叉表是指被其他表引用的表 尽量用EXISTS和NOT EXISTS代替IN和NOT INEXISTS一定比IN查询速">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-01-18T08:09:24.430Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="如何优化SQL语句">
+<meta name="twitter:description" content="平时写SQL时积累的一些关于SQL优化的技巧 选择最有效率的表名顺序ORACLE的解析器是按照从右到左的顺序处理FROM中的表名，FROM中最后面的表（基础表）将优先被处理，在from包含多个表时，你必须将记录最少的表作为基础表，如果是3个表以上的表连接，那必须将交叉表作为基础表，交叉表是指被其他表引用的表 尽量用EXISTS和NOT EXISTS代替IN和NOT INEXISTS一定比IN查询速">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2013/05/28/2013-05-28-how-to-optimize-sql/"/>
+
+
+
+
+
+  <title>如何优化SQL语句 | 空心菜的博客</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">空心菜的博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2013/05/28/2013-05-28-how-to-optimize-sql/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="空心菜">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="空心菜的博客">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">如何优化SQL语句</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2013-05-28T22:39:00+08:00">
+                2013-05-28
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/database/" itemprop="url" rel="index">
+                    <span itemprop="name">database</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>平时写SQL时积累的一些关于SQL优化的技巧</p>
+<h3 id="选择最有效率的表名顺序"><a href="#选择最有效率的表名顺序" class="headerlink" title="选择最有效率的表名顺序"></a>选择最有效率的表名顺序</h3><p>ORACLE的解析器是按照从右到左的顺序处理FROM中的表名，FROM中最后面的表（基础表）将优先被处理，在from包含多个表时，你必须将记录最少的表作为基础表，如果是3个表以上的表连接，那必须将交叉表作为基础表，交叉表是指被其他表引用的表</p>
+<h3 id="尽量用EXISTS和NOT-EXISTS代替IN和NOT-IN"><a href="#尽量用EXISTS和NOT-EXISTS代替IN和NOT-IN" class="headerlink" title="尽量用EXISTS和NOT EXISTS代替IN和NOT IN"></a>尽量用<code>EXISTS</code>和<code>NOT EXISTS</code>代替<code>IN</code>和<code>NOT IN</code></h3><p><code>EXISTS</code>一定比<code>IN</code>查询速度快么？这个问题有过争论，根本问题是在驱动表的问题<br><code>EXISTS</code>是在子查询中用到索引，而<code>IN</code>是在外查询中用到索引<br>e.g.<br>A是小表，B是大表<br>​<br>    select * from A WHERE cc in (select cc from B)</p>
+<p>效率低，因为用到了A上的索引，而没用上大表B的索引</p>
+<pre><code>select * from A where exists(select cc from B where cc=A.cc)
+</code></pre><p>效率高，因为<code>EXISTS</code>用到了B上的索引<br>因为<code>NOT IN</code>不会用索引，而<code>NOT EXISTS</code>还会在子查询中用到索引，所以应尽量使用<code>NOT EXISTS</code>代替<code>NOT IN</code></p>
+<h3 id="WHERE子句中的连接顺序"><a href="#WHERE子句中的连接顺序" class="headerlink" title="WHERE子句中的连接顺序"></a><code>WHERE</code>子句中的连接顺序</h3><p>因为ORACLE采用自下而上的顺序解析SQL，所以，表连接的必须写在其他条件之前，能过滤掉最多记录的条件应该写在最后</p>
+<p>###删除重复记录使用ROWID</p>
+<pre><code>DELETE FROM STUDENT S WHERE S.ROWID &gt; (SELECT MIN(X.ROWID) FROM STUDENT T WHERE T.ROWID = S.ROWID)     
+</code></pre><p>因为使用了ROWID，所以，是效率最高的删除重复记录的方法</p>
+<h3 id="用EXISTS代替DISTINCT"><a href="#用EXISTS代替DISTINCT" class="headerlink" title="用EXISTS代替DISTINCT"></a>用<code>EXISTS</code>代替<code>DISTINCT</code></h3><p>对于1对多的表信息查询时，<code>EXISTS</code>比<code>DISTINCT</code>更为迅速<br>e.g.<br>低效</p>
+<pre><code>SELECT DISTINCT DEPT_ID,DEPT_NAME FROM DEPT,EMP
+WHERE DEPT.DEPT_ID = EMP.DEPT_ID
+</code></pre><p>高效</p>
+<pre><code>SELECT DEPT_ID,DEPT_NAME FROM DEPT D
+WHERE EXISTS(SELECT 1 FROM EMP E WHERE E.DEPT_ID = D.DEPT_ID)
+</code></pre><h3 id="避免在索引列上使用-、计算、NOT、函数、IS-NULL、IS-NOT-NULL"><a href="#避免在索引列上使用-、计算、NOT、函数、IS-NULL、IS-NOT-NULL" class="headerlink" title="避免在索引列上使用 !=、计算、NOT、函数、IS NULL、IS NOT NULL"></a>避免在索引列上使用 !=、计算、NOT、函数、IS NULL、IS NOT NULL</h3><p>以上几种情况都会导致查询中不能使用索引，因为它只会告诉你有什么而不会告诉你没有什么，ORACLE 遇到 NOT时就会与在索引列上使用函数相同，放弃使用索引而进行全表扫描</p>
+<h3 id="使用-gt-代替-gt"><a href="#使用-gt-代替-gt" class="headerlink" title="使用 &gt;= 代替 &gt;"></a>使用 &gt;= 代替 &gt;</h3><p>低效</p>
+<pre><code>SELECT * FROM EMP WHERE EMP_ID &gt;= 4
+</code></pre><p>高效</p>
+<pre><code>SELECT * FROM EMP WHERE EMP_ID &gt; 3
+</code></pre><p>两者区别在于，前者DBMS将直接跳到 EMP_ID = 4的记录，而后者将先跳到EMP=3的记录上</p>
+<p>###尽可能的使用<code>WHERE</code>来代替<code>HAVING</code></p>
+<p>避免使用HAVING子句, HAVING 只会在检索出所有记录之后才对结果集进行过滤. 这个处理需要排序,总计等操作. 如果能通过WHERE子句限制记录的数目,那就能减少这方面的开销. (非oracle中)on、where、having这三个都可以加条件的子句中，on是最先执行，where次之，having最后，因为on是先把不符合条件的记录过滤后才进行统计，它就可以减少中间运算要处理的数据，按理说应该速度是最快的，where也应该比having快点的，因为它过滤数据后才进行sum，在两个表联接时才用on的，所以在一个表的时候，就剩下where跟having比较了。在这单表查询统计的情况下，如果要过滤的条件没有涉及到要计算字段，那它们的结果是一样的，只是where可以使用rushmore技术，而having就不能，在速度上后者要慢如果要涉及到计算的字段，就表示在没计算之前，这个字段的值是不确定的，根据上篇写的工作流程，where的作用时间是在计算之前就完成的，而having就是在计算后才起作用的，所以在这种情况下，两者的结果会不同。在多表联接查询时，on比where更早起作用。系统首先根据各个表之间的联接条件，把多个表合成一个临时表后，再由where进行过滤，然后再计算，计算完后再由having进行过滤。由此可见，要想过滤条件起到正确的作用，首先要明白这个条件应该在什么时候起作用，然后再决定放在那里 </p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/SQL-database/" rel="tag"># SQL database</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2013/04/17/2013-04-17-max-sub-arr-sum/" rel="next" title="编程之美（一）：求连续子数组的最大和">
+                <i class="fa fa-chevron-left"></i> 编程之美（一）：求连续子数组的最大和
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">空心菜</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">4</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                
+                  <span class="site-state-item-count">6</span>
+                  <span class="site-state-item-name">分类</span>
+                
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">4</span>
+                  <span class="site-state-item-name">标签</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/redfish88" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#选择最有效率的表名顺序"><span class="nav-number">1.</span> <span class="nav-text">选择最有效率的表名顺序</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#尽量用EXISTS和NOT-EXISTS代替IN和NOT-IN"><span class="nav-number">2.</span> <span class="nav-text">尽量用EXISTS和NOT EXISTS代替IN和NOT IN</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#WHERE子句中的连接顺序"><span class="nav-number">3.</span> <span class="nav-text">WHERE子句中的连接顺序</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#用EXISTS代替DISTINCT"><span class="nav-number">4.</span> <span class="nav-text">用EXISTS代替DISTINCT</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#避免在索引列上使用-、计算、NOT、函数、IS-NULL、IS-NOT-NULL"><span class="nav-number">5.</span> <span class="nav-text">避免在索引列上使用 !=、计算、NOT、函数、IS NULL、IS NOT NULL</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#使用-gt-代替-gt"><span class="nav-number">6.</span> <span class="nav-text">使用 &gt;= 代替 &gt;</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">空心菜</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
